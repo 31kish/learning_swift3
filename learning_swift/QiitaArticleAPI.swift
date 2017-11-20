@@ -21,21 +21,23 @@ class QiitaArticleAPI : HttpTask<Article> {
 }
 
 struct Article {
-//    let httpStatusCode: Int?
-//    let title: String?
-//    let user: [String: AnyObject]?
-//    let userID: String?
+    let title: String?
+    let user: User?
 }
 
 extension Article: Unboxable {
     init(unboxer: Unboxer) throws {
-        print(unboxer)
-//        httpStatusCode = unboxer.unbox(key: "http_status")
-//        title = unboxer.unbox(key: "title")
-//        user = unboxer.unbox(key: "user")
-//        userID = ""
-//        if let user = self.user {
-//            userID = user["id"]
-//        }
+        title = unboxer.unbox(key: "title")
+        user = unboxer.unbox(key: "user")
+    }
+}
+
+struct User {
+    let id: String?
+}
+
+extension User: Unboxable {
+    init(unboxer: Unboxer) throws {
+        id = unboxer.unbox(key: "id")
     }
 }

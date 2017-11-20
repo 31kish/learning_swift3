@@ -46,13 +46,12 @@ class HttpTask<T: Unboxable> {
                 return
             }
             
-            print(String(data: data, encoding: .utf8) ?? "")
-            
-            var entity: T?
+            var entity: [T]?
             var error: Error?
             
             do {
-                let e: T = try unbox(data: data)
+                let e: [T] = try unbox(data: data)
+                print("try unbox", e)
                 entity = e
             } catch let e {
                 error = e
