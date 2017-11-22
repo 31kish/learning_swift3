@@ -46,11 +46,13 @@ class HttpTask<T: Unboxable> {
                 return
             }
             
-            var entity: [T]?
+            print(String(data: data, encoding: .utf8) as String!)
+
+            var entity: T?
             var error: Error?
             
             do {
-                let e: [T] = try unbox(data: data)
+                let e: T = try unbox(data: data)
                 print("try unbox", e)
                 entity = e
             } catch let e {
@@ -58,6 +60,41 @@ class HttpTask<T: Unboxable> {
             }
             
             completion?(entity, error)
+            self?.task = nil
+        }).resume()
+    }
+    
+    /// 配列対応
+    func execute(completion: (([T?], Error?) -> ())?) {
+        if let _ = task {
+            task?.cancel()
+            task = nil
+        }
+        
+        let url = URLConst.apiBase + path
+        print("url is ", url)
+        
+        task = Alamofire.request(url, method: method, parameters: params, encoding: URLEncoding.default, headers: headers)
+        
+        task?.responseJSON(queue: .main, options: .allowFragments, completionHandler: { [weak self] (res) in
+            guard res.result.isSuccess, let data = res.data else {
+                completion?([], res.result.error)
+                self?.task = nil
+                return
+            }
+
+            print(String(data: data, encoding: .utf8) as String!)
+
+            var entity: [T?] = [nil]
+            var error: Error?
+            
+            do {
+                entity = try unbox(data: data)
+            } catch let e {
+                error = e
+            }
+            
+            completion?(entity , error)
             self?.task = nil
         }).resume()
     }

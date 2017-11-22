@@ -11,7 +11,7 @@ import Alamofire
 import Unbox
 
 class QiitaArticleAPI : HttpTask<Article> {
-    static func getItems(completion: ((Article?, Error?) -> ())?) -> HttpTask<Article> {
+    static func getItems(completion: (([Article?], Error?) -> ())?) -> HttpTask<Article> {
         let path = "/items"
         let task = HttpTask<Article>(path: path)
         task.execute(completion: completion)
@@ -22,6 +22,7 @@ class QiitaArticleAPI : HttpTask<Article> {
 
 struct Article {
     let title: String?
+    let urlStr: String?
     let user: User?
 }
 
@@ -29,6 +30,7 @@ extension Article: Unboxable {
     init(unboxer: Unboxer) throws {
         title = unboxer.unbox(key: "title")
         user = unboxer.unbox(key: "user")
+        urlStr = unboxer.unbox(key: "url")
     }
 }
 
