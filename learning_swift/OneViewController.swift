@@ -11,26 +11,36 @@ import UIKit
 class OneViewController: UIViewController {
 
     var tableView = UITableView()
+    var tableDataSource = [Article?]()
     
     override func viewWillAppear(_ animated: Bool) {
         navigationController?.setNavigationBarHidden(true, animated: false)
         hidesBarsWithScrollView(scrollView: tableView, hidden: false, hiddenTop: true, hiddenBottom: true)
+        
+        if let indexPathForSelectedRow = tableView.indexPathForSelectedRow {
+            tableView.deselectRow(at: indexPathForSelectedRow, animated: true)
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = #colorLiteral(red: 0.4745098054, green: 0.8392156959, blue: 0.9764705896, alpha: 1)
         
-        _ = QiitaArticleAPI.getItems { (article, error) in
-            print(article)
-            print(error)
-        }
-        
         tableView = UITableView(frame: view.frame, style: .plain)
         tableView.delegate = self
         tableView.dataSource = self
         
         view.addSubview(tableView)
+        
+        _ = QiitaArticleAPI.getItems { [weak self] (items, error) in
+            if let e = error {
+                print(e)
+                return
+            }
+            
+            self?.tableDataSource = items
+            self?.tableView.reloadData()
+        }
     }
 
     func hidesBarsWithScrollView(scrollView: UIScrollView, hidden: Bool, hiddenTop: Bool, hiddenBottom: Bool) {
@@ -92,20 +102,41 @@ extension OneViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "cell")
-        cell.textLabel?.text = String(indexPath.row)
-        cell.detailTextLabel?.text = "detail" + String(indexPath.row)
+        cell.textLabel?.text = tableDataSource[indexPath.row]?.title
+        cell.detailTextLabel?.text = tableDataSource[indexPath.row]?.user?.id
         return cell
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 30
+        return tableDataSource.count
     }
 }
 
 extension OneViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(indexPath.row)
+        let selectedData = tableDataSource[indexPath.row]
+
+        let alertController = UIAlertController(title: selectedData?.title, message: selectedData?.urlStr, preferredStyle: .alert)
+
+        let positiveAction = UIAlertAction(title: "Open Safari", style: .default) { (action: UIAlertAction) in
+            let url = URL(string: selectedData?.urlStr as String!)!
+
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+
+            tableView.deselectRow(at: indexPath, animated: true)
+        }
+
+        let negativeAction = UIAlertAction(title: "Close", style: .cancel) { (action: UIAlertAction) in
+            tableView.deselectRow(at: indexPath, animated: true)
+        }
+        
+        alertController.addAction(positiveAction)
+        alertController.addAction(negativeAction)
+
+        present(alertController, animated: true, completion: nil)
     }
 }
 
